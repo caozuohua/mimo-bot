@@ -5,6 +5,7 @@ import asyncio
 import json
 import logging
 import os
+import subprocess
 import sys
 import tempfile
 from collections import defaultdict
@@ -84,13 +85,34 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status_msg = await update.message.reply_text("正在识别语音...")
 
     file = await context.bot.get_file(update.message.voice.file_id)
-    with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp:
-        await file.download_to_drive(tmp.name)
-        tmp_path = tmp.name
+    ogg_path = None
+    wav_path = None
 
     try:
+        # Download OGG from Telegram
+        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp:
+            await file.download_to_drive(tmp.name)
+            ogg_path = tmp.name
+
+        # Convert OGG → WAV (SpeechRecognition needs WAV/AIFF/FLAC)
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            wav_path = tmp.name
+
+        proc = await asyncio.create_subprocess_exec(
+            "ffmpeg", "-i", ogg_path, "-ar", "16000", "-ac", "1", "-f", "wav", wav_path,
+            "-y", "-loglevel", "error",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await proc.communicate()
+        if proc.returncode != 0:
+            log.error("ffmpeg conversion failed: %s", stderr.decode())
+            await status_msg.edit_text("语音格式转换失败，请重试。")
+            return
+
+        # Recognize speech
         recognizer = sr.Recognizer()
-        with sr.AudioFile(tmp_path) as source:
+        with sr.AudioFile(wav_path) as source:
             audio = recognizer.record(source)
         user_text = recognizer.recognize_google(audio, language="zh-CN")
         await status_msg.edit_text(f"识别结果: {user_text}\n\n思考中...")
@@ -101,8 +123,15 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         log.error("STT request failed: %s", e)
         await status_msg.edit_text(f"语音识别服务出错: {e}")
         return
+    except Exception as e:
+        log.exception("Voice processing error")
+        await status_msg.edit_text(f"语音处理出错: {e}")
+        return
     finally:
-        os.unlink(tmp_path)
+        if ogg_path:
+            os.unlink(ogg_path)
+        if wav_path and os.path.exists(wav_path):
+            os.unlink(wav_path)
 
     await _process_message(user_text, update, context, status_msg)
 

@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=caozuohua99
 WorkingDirectory=/home/caozuohua99
-ExecStart=/usr/bin/python3 /home/caozuohua99/mimo_telegram_bot.py
+ExecStart=/usr/bin/python3 /home/caozuohua99/mimo-bot/bot.py
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -18,7 +18,7 @@ ProtectSystem=strict
 ReadWritePaths=/home/caozuohua99/.mimocode /tmp
 
 # Environment
-EnvironmentFile=-/home/caozuohua99/.env.mimo-bot
+EnvironmentFile=-/home/caozuohua99/mimo-bot/.env
 
 [Install]
 WantedBy=multi-user.target
