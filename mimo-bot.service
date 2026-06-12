@@ -1,0 +1,24 @@
+[Unit]
+Description=MiMo Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=caozuohua99
+WorkingDirectory=/home/caozuohua99
+ExecStart=/usr/bin/python3 /home/caozuohua99/mimo_telegram_bot.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/caozuohua99/.mimocode /tmp
+
+# Environment
+EnvironmentFile=-/home/caozuohua99/.env.mimo-bot
+
+[Install]
+WantedBy=multi-user.target
