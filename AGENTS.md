@@ -18,7 +18,7 @@ Single-file Python Telegram bot that bridges to MiMo Code Agent for AI coding as
 
 ## Key Facts
 
-- **Entry point**: `bot.py` (single file, ~245 lines)
+- **Entry point**: `bot.py` (single file, ~337 lines)
 - **Python version**: 3.10+ (required)
 - **External dependencies**:
   - `ffmpeg` for voice message conversion (must be installed on system)
@@ -27,6 +27,7 @@ Single-file Python Telegram bot that bridges to MiMo Code Agent for AI coding as
   - `TELEGRAM_BOT_TOKEN` (required)
   - `MIMO_TIMEOUT` (default: 300 seconds)
   - `ALLOWED_USERS` (comma-separated Telegram user IDs)
+  - `STT_LANGUAGE` (default: zh-CN, language for Google STT)
 
 ## Development
 
@@ -60,6 +61,8 @@ sudo systemctl start mimo-bot
 - MiMo responses parsed as JSON lines, session persistence per user
 - All user interactions in Chinese (help messages, error responses)
 - Long replies truncated at 4000 characters
+- Resilience features: retry logic for MiMo calls and STT requests, startup checks for ffmpeg and MiMo binary
+- New commands: `/ping` (check bot status), `/version` (show version)
 
 ## Conventions
 
