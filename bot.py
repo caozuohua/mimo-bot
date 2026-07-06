@@ -274,6 +274,7 @@ async def _process_message(
         log.info("user=%s session=%s text=%s", user_id, sid, user_text[:80])
 
         output = None
+        proc = None
         for attempt in range(MAX_RETRIES + 1):
             try:
                 proc = await asyncio.create_subprocess_exec(
@@ -294,6 +295,12 @@ async def _process_message(
                     MIMO_TIMEOUT,
                     attempt + 1,
                 )
+                if proc and proc.returncode is None:
+                    proc.kill()
+                    await proc.wait()
+                    log.info(
+                        "user=%s killed timed-out process pid=%d", user_id, proc.pid
+                    )
                 if attempt < MAX_RETRIES:
                     await asyncio.sleep(RETRY_DELAY)
                 else:
@@ -303,6 +310,9 @@ async def _process_message(
                     return
             except Exception as e:
                 log.exception("user=%s mimo error (attempt %d)", user_id, attempt + 1)
+                if proc and proc.returncode is None:
+                    proc.kill()
+                    await proc.wait()
                 if attempt < MAX_RETRIES:
                     await asyncio.sleep(RETRY_DELAY)
                 else:
