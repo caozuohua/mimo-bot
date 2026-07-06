@@ -1,16 +1,39 @@
 [project]
 name = "mimo-bot"
-version = "1.0.0"
+version = "1.1.0"
 description = "Telegram Bot bridge to MiMo Code Agent"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
+authors = [
+    {name = "caozuohua"},
+]
+keywords = ["telegram", "bot", "mimo", "ai", "coding-assistant"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "python-telegram-bot>=22.0",
     "SpeechRecognition>=3.10",
     "pyaudio>=0.2.14",
     "duckduckgo-search>=7.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/caozuohua/mimo-bot"
+Repository = "https://github.com/caozuohua/mimo-bot"
+Issues = "https://github.com/caozuohua/mimo-bot/issues"
+Changelog = "https://github.com/caozuohua/mimo-bot/blob/main/CHANGELOG.md"
 
 [project.scripts]
 mimo-bot = "bot:main"

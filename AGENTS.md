@@ -18,7 +18,7 @@ Single-file Python Telegram bot that bridges to MiMo Code Agent for AI coding as
 
 ## Key Facts
 
-- **Entry point**: `bot.py` (single file, ~337 lines)
+- **Entry point**: `bot.py` (~390 lines)
 - **Python version**: 3.10+ (required)
 - **External dependencies**:
   - `ffmpeg` for voice message conversion (must be installed on system)
@@ -39,7 +39,12 @@ ruff format .
 Configuration in `pyproject.toml` (line length 88, Python 3.10 target).
 
 ### Testing
-No tests currently exist.
+```bash
+pytest -v
+```
+21 unit tests covering: access control, command handlers, message processing,
+MiMo invocation, JSON output parsing, timeout handling, voice blocking,
+and signal handling.
 
 ### Type Checking
 No type checking configured.
@@ -61,8 +66,10 @@ sudo systemctl start mimo-bot
 - MiMo responses parsed as JSON lines, session persistence per user
 - All user interactions in Chinese (help messages, error responses)
 - Long replies truncated at 4000 characters
-- Resilience features: retry logic for MiMo calls and STT requests, startup checks for ffmpeg and MiMo binary
-- New commands: `/ping` (check bot status), `/version` (show version)
+- Resilience: retry logic for MiMo calls and STT requests
+- Timeout cleanup: killed MiMo subprocess prevents orphan processes
+- Startup checks for ffmpeg and MiMo binary
+- Graceful shutdown via SIGTERM/SIGINT handlers
 
 ## Conventions
 
@@ -70,3 +77,4 @@ sudo systemctl start mimo-bot
 - Use `log.info()`/`log.error()` for logging
 - Temporary files cleaned up in `finally` blocks
 - All async functions use `asyncio.create_subprocess_exec` for subprocess calls
+- Always kill subprocesses on timeout or error
