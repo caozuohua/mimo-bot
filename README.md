@@ -74,6 +74,9 @@ journalctl -u mimo-bot -f
 | `/start` | Show help message |
 | `/clear` | Clear current session |
 | `/status` | Show current session ID |
+| `/ping` | Check if bot is online |
+| `/version` | Show bot version |
+| `/search <keywords>` | Search via DuckDuckGo |
 
 ## License
 

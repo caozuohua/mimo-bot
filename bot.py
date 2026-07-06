@@ -11,6 +11,7 @@ import tempfile
 from collections import defaultdict
 
 import speech_recognition as sr
+from duckduckgo_search import DDGS
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -94,7 +95,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/clear - 清除当前会话\n"
         "/status - 查看当前会话状态\n"
         "/ping - 检查机器人是否在线\n"
-        "/version - 查看版本信息"
+        "/version - 查看版本信息\n"
+        "/search <关键词> - 使用 DuckDuckGo 搜索"
     )
 
 
@@ -117,6 +119,35 @@ async def cmd_ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def cmd_version(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("MiMo Telegram Bot v1.0.0")
+
+
+async def cmd_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("用法: /search <关键词>")
+        return
+
+    query = " ".join(context.args)
+    status_msg = await update.message.reply_text(f"搜索中: {query}")
+
+    try:
+        with DDGS() as ddgs:
+            results = list(ddgs.text(query, max_results=5))
+
+        if not results:
+            await status_msg.edit_text("未找到相关结果。")
+            return
+
+        reply = f"搜索结果: {query}\n\n"
+        for i, r in enumerate(results, 1):
+            reply += f"{i}. {r['title']}\n{r['href']}\n{r['body'][:200]}\n\n"
+
+        if len(reply) > MAX_REPLY_LEN:
+            reply = reply[:MAX_REPLY_LEN] + "\n... (内容过长已截断)"
+
+        await status_msg.edit_text(reply)
+    except Exception as e:
+        log.exception("Search error")
+        await status_msg.edit_text(f"搜索出错: {e}")
 
 
 # ─── Voice ────────────────────────────────────────────────────────────────────
@@ -315,6 +346,8 @@ async def _process_message(
 
 
 def main():
+    import signal
+
     log.info("Starting MiMo Telegram Bot...")
     log.info("MiMo binary: %s", MIMO_BIN)
     log.info("Timeout: %ds", MIMO_TIMEOUT)
@@ -327,10 +360,20 @@ def main():
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("ping", cmd_ping))
     app.add_handler(CommandHandler("version", cmd_version))
+    app.add_handler(CommandHandler("search", cmd_search))
     app.add_handler(MessageHandler(filters.VOICE, handle_voice))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
+    def _shutdown_handler(signum, frame):
+        sig_name = signal.Signals(signum).name
+        log.info("Received %s, shutting down gracefully...", sig_name)
+
+    signal.signal(signal.SIGTERM, _shutdown_handler)
+    signal.signal(signal.SIGINT, _shutdown_handler)
+
+    log.info("Bot is running. Press Ctrl+C to stop.")
     app.run_polling(drop_pending_updates=True)
+    log.info("Bot shut down.")
 
 
 if __name__ == "__main__":
